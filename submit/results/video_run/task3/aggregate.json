@@ -1,0 +1,16 @@
+{
+  "episodes": 3,
+  "success_rate": 1.0,
+  "target_selection_accuracy": 1.0,
+  "verification_rate": 1.0,
+  "mean_control_steps": 2750.0,
+  "mean_wall_time_s": 109.9806758472696,
+  "total_unsafe_contacts": 0,
+  "mean_non_target_displacement_m": 0.0,
+  "goal_completion_rate": 1.0,
+  "task_plan_match_rate": 1.0,
+  "policy": "policies.student_policy:StudentPolicy",
+  "task_file": "configs/task3_sort_public.json",
+  "execution_mode": "async",
+  "realtime": true
+}

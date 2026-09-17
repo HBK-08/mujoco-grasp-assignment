@@ -1,0 +1,9 @@
+{
+  "schema_version": 2,
+  "task": "Task 3: real-object semantic sorting",
+  "episodes": [
+    {"episode_id": "t3_public_001", "instruction": "把所有水果放进圆盘，把所有包装食品放进方盘。", "target": "apple", "targets": ["apple", "orange", "mustard_bottle", "potted_meat_can"], "destinations": ["round_tray", "round_tray", "square_tray", "square_tray"], "seed": 91},
+    {"episode_id": "t3_public_002", "instruction": "Sort the fruit into the round tray and the packaged food into the square tray.", "target": "apple", "targets": ["apple", "orange", "mustard_bottle", "potted_meat_can"], "destinations": ["round_tray", "round_tray", "square_tray", "square_tray"], "seed": 92},
+    {"episode_id": "t3_public_003", "instruction": "请把苹果和橙子归到圆盘；芥末瓶和午餐肉罐归到方盘。", "target": "apple", "targets": ["apple", "orange", "mustard_bottle", "potted_meat_can"], "destinations": ["round_tray", "round_tray", "square_tray", "square_tray"], "seed": 93}
+  ]
+}

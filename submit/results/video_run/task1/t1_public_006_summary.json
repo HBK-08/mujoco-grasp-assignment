@@ -1,0 +1,60 @@
+{
+  "episode_id": "t1_public_006",
+  "split": "public",
+  "seed": 36,
+  "instruction": "Place the blue rectangular block in the square tray.",
+  "expected_target": "blue_box",
+  "selected_target": "blue_box",
+  "target_selection_correct": true,
+  "task_plan_matches_hidden_goal": true,
+  "success": true,
+  "terminal_reason": "success",
+  "control_steps": 409,
+  "control_budget": 800,
+  "sim_time_s": 16.60000000000168,
+  "wall_time_s": 16.34598230791744,
+  "execution_mode": "async",
+  "realtime": true,
+  "async_control": {
+    "submitted": 194,
+    "accepted": 193,
+    "stale_dropped": 1,
+    "model_errors": 0,
+    "safe_hold_steps": 2,
+    "reused_command_steps": 214,
+    "last_latency_s": 0.03970893402583897
+  },
+  "last_stage": "verify_place",
+  "verification_observed": true,
+  "retry_count": 0,
+  "unsafe_contact_count": 0,
+  "object_xy_displacement_m": {
+    "red_cube": 1.5957525039522625e-14,
+    "green_cylinder": 3.2970248040959257e-07,
+    "blue_box": 0.3091688899768782
+  },
+  "max_non_target_xy_displacement_m": 3.2970248040959257e-07,
+  "object_catalog": [
+    "red_cube",
+    "green_cylinder",
+    "blue_box",
+    "banana",
+    "apple",
+    "orange",
+    "mustard_bottle",
+    "potted_meat_can",
+    "scissors",
+    "marker"
+  ],
+  "task_kind": "place",
+  "hidden_goals": [
+    {
+      "target": "blue_box",
+      "destination": "square_tray"
+    }
+  ],
+  "goal_status": {
+    "blue_box->square_tray": true
+  },
+  "completed_goal_count": 1
+}

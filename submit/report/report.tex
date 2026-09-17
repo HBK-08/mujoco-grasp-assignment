@@ -1,0 +1,173 @@
+\documentclass[11pt,a4paper]{ctexart}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\setlist{nosep,leftmargin=2em}
+\pagestyle{fancy}
+\fancyhf{}
+\setlength{\headheight}{14pt}
+\lhead{MuJoCo 语言条件抓取大作业}
+\rhead{实验报告}
+\cfoot{\thepage}
+
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{TODO：#1}}}
+
+\title{基于微调 YOLO、RGB-D 几何与闭环状态机的\\MuJoCo 语言条件抓取系统}
+\author{\todo{姓名、学号、组员信息}}
+\date{2026 年 9 月}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+本文实现了一套可本地复现的语言条件桌面抓取与分拣系统。系统从公开自然语言指令构造目标计划，使用 12 类微调 YOLOv8n 在当前顶视 RGB 图像中检测物体与容器，通过对齐深度和相机标定将二维检测恢复为世界坐标，再由阻尼最小二乘逆运动学、有限状态机、动作后验证和失败恢复完成抓取、搬运与放置。最终公开集严格使用评测器的异步、25 Hz 实时协议：Task 1 为 6/6，Task 2 为 6/6，Task 3 为 3/3；目标选择、验证、目标完成和任务计划匹配率均为 100\%，不安全接触总数为 0。本文同时保留了一份真实失败日志，并说明 Task 3 中长物体恢复抓取、异步夹持判定和释放撤离的改进过程。所有结论仅针对公开任务，不声称隐藏集结果。
+\end{abstract}
+
+\section{问题定义与边界}
+
+输入是一条中文或英文自然语言指令，以及评测器提供的顶视/前视 RGB-D、相机标定、机械臂关节状态、末端位姿与夹爪开度。策略不能读取隐藏目标答案或用随机种子查表。输出为 7 轴关节目标、夹爪开度、当前阶段、理由、已 grounding 的目标标识以及完成/重试状态。
+
+Task 1 要求将彩色基础几何体放入指定盘；Task 2 要求将带材质的香蕉或苹果放入指定盘；Task 3 要求将苹果和橙子归入圆盘，将芥末瓶和午餐肉罐归入方盘。成功由原始 MuJoCo 物理谓词判断，包括物体进入目标盘、松爪、稳定保持以及进入验证阶段。Task 1/2 的控制预算为每回合 800 步，Task 3 为 3000 步。
+
+本系统使用本地模型服务，不调用外部付费 API，也不包含真实密钥。提交包含约 6.2 MB 的 12 类微调 YOLOv8n 权重；推理依赖 Ultralytics 8.4.149，其许可边界在 README 中说明。仿真结论不能直接推广到真实机器人，也不能由公开集成绩推断隐藏集成绩。
+
+\section{系统架构}
+
+系统信息流如下：
+
+\begin{center}
+\fbox{自然语言指令} $\rightarrow$
+\fbox{目标/顺序解析} $\rightarrow$
+\fbox{YOLO 检测} $\rightarrow$
+\fbox{RGB-D 三维恢复}\\[0.5em]
+$\rightarrow$ \fbox{抓取姿态与路点} $\rightarrow$
+\fbox{DLS IK + 状态机} $\rightarrow$
+\fbox{MuJoCo 执行} $\rightarrow$
+\fbox{视觉/物理验证与恢复}
+\end{center}
+
+评测器通过单一异步 worker 调用策略。模型或策略计算期间，物理线程仍以 25 Hz 推进；短时间复用上一条命令，超出复用窗口后进入本地安全保持，并丢弃状态已经漂移的过期结果。策略本身不另建高频网络线程。所有关键阶段、检测框、置信度、几何估计、动作、接触、重试和验证结果写入 \path{events.jsonl}，回合指标写入 \path{summary.json}，批量指标写入 \path{aggregate.json}。
+
+\section{方法}
+
+\subsection{语言计划与目标约束}
+
+策略只解析公开的 \texttt{instruction} 字段。对于 Task 1/2，规则解析中文和英文对象/容器同义词；对于 Task 3，解析水果与包装食品两个语义组及其目标盘，生成四个有序 pick/place 动作。解析结果仅用于限制 YOLO 候选类别和生成任务计划，不包含任何位置坐标。物体和盘的位置始终来自当前 RGB-D 观测。
+
+\subsection{视觉检测与三维几何}
+
+YOLO 服务接收当前 JPEG 和候选类别列表，返回类别、置信度和二维框。策略使用框内深度、相机内参和相机到世界变换恢复三维点云，并对容器内部区域和物体表面进行鲁棒统计。基础几何体和水果使用目标中心及形状相关抓取高度；长方体、芥末瓶和午餐肉罐还使用点云主轴估计夹爪腕角和短边夹持方向。
+
+\subsection{规划、逆运动学与执行}
+
+控制器使用阻尼最小二乘逆运动学生成关节目标，并通过 \texttt{move\_toward} 限制每步关节变化。主要阶段包含 \texttt{pregrasp}、\texttt{approach}、\texttt{descend}、\texttt{close}、\texttt{lift}、\texttt{above\_place}、\texttt{place}、\texttt{verify\_place} 和撤离阶段。运输路点与高度按物体类别调整，避免低位横扫盘沿或其他物体。
+
+\subsection{验证、失败恢复与安全}
+
+夹持后同时参考夹爪开度、动作阶段和后续运输状态识别空抓或滑移；放置后使用目标盘区域、深度和重新检测结果进行验证。检测失败、空抓或验证不通过时，策略可重新感知、修正抓取点或安全停止。安全约束包括关节目标限速、最低安全高度、容器上方竖直进出、模型异常时保持和不安全接触计数。
+
+Task 3 的最后稳定性改进包括三项：一是对完成过芥末瓶恢复且点云长宽比小于 1.40 的模糊观测选择最小等价腕角，避免约 90 度的大幅摆腕；二是芥末瓶释放后先竖直抬升，再执行相机清场，避免尚未完全分离时斜向拖动物体；三是把芥末恢复抓取的立即空抓阈值由 0.92 调整为 0.96，因为异步执行下 0.92--0.95 仍可能对应真实侧向接触，后续运输阶段还有独立验证。
+
+\section{实验设计}
+
+公开集包含 Task 1 六个回合、Task 2 六个回合和 Task 3 三个回合。最终结果使用固定代码、权重、置信度、重试上限和控制参数，一次性运行完整公开任务。正式命令保持 \texttt{execution\_mode=async} 与 \texttt{realtime=true}，没有降低步数预算或成功判定。工作站上 YOLO 使用 GPU 0，MuJoCo EGL 使用独立 GPU；GPU 编号只是资源隔离，不改变评测协议。
+
+报告指标包括成功率、目标选择准确率、验证率、目标完成率、任务计划匹配率、平均控制步数、平均墙钟时间、不安全接触和非目标位移。对照实验采用修复前后的 Task 3 完整公开集；两组都使用相同的异步实时协议和 3000 步预算。该对照反映三项鲁棒性修复的组合效果，不将其表述为单因素因果消融。
+
+\section{结果}
+
+\begin{table}[htbp]
+\centering
+\small
+\begin{tabular}{lrrrrrrrr}
+\toprule
+任务 & 回合 & 成功率 & 目标选择 & 验证率 & 目标完成 & 平均步数 & 平均耗时(s) & 不安全接触 \\
+\midrule
+Task 1 & 6 & 100\% & 100\% & 100\% & 100\% & 380.5 & 15.20 & 0 \\
+Task 2 & 6 & 100\% & 100\% & 100\% & 100\% & 548.5 & 21.92 & 0 \\
+Task 3 & 3 & 100\% & 100\% & 100\% & 100\% & 2710.0 & 108.38 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{最终公开集正式结果。三项任务的计划匹配率均为 100\%。}
+\end{table}
+
+Task 1 的平均非目标平面位移为 $1.85\times10^{-7}$ m，Task 2 为 0.00143 m，Task 3 为 0。Task 3 三个回合分别在 2537、2936 和 2657 步完成，其中第二个回合距离 3000 步预算较近，但仍在原始预算内成功。
+
+\subsection{Task 3 工程对照}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+版本 & 成功率 & 验证率 & 目标完成率 & 计划匹配率 & 不安全接触 \\
+\midrule
+鲁棒性修复前 & 33.3\% & 33.3\% & 41.7\% & 100\% & 0 \\
+最终版本 & 100\% & 100\% & 100\% & 100\% & 0 \\
+\bottomrule
+\end{tabular}
+\caption{相同公开集、异步实时协议和步数预算下的组合改进对照。}
+\end{table}
+
+对照说明语言计划和安全并非主要瓶颈；修复前已经保持 100\% 计划匹配和 0 次不安全接触，失败主要来自长物体抓取与释放的物理鲁棒性。最终版本在不改变评测器、任务文件和预算的情况下完成 3/3。
+
+\section{失败分析}
+
+提交保留的代表性失败为修复前 \texttt{t3\_public\_003}：目标选择与计划匹配正确、模型错误数为 0、不安全接触为 0，但在 1682 步以 \texttt{model\_error} 阶段结束，四个目标均未完成。事件日志显示芥末瓶恢复点云的长宽比位于旧阈值附近，微小观测变化会选择不同的等价腕角；较大的腕部旋转使机械臂在低位接近物体并破坏后续定位。另一个失败轨迹显示芥末瓶已经进入方盘，但释放后的低位斜向撤离会继续轻微夹持并把瓶子拖向盘沿。
+
+最早错误点因此属于抓取姿态/释放控制，而不是语言 grounding 或 YOLO 服务不可用。对应修复是统一模糊点云角度阈值、释放后竖直撤离，以及延后异步空抓判定。最终成功日志中四个 \texttt{goal\_status} 全部为真，最后阶段为 \texttt{verify\_place}。
+
+\section{演示视频}
+
+\path{video/demo_3_to_5min.mp4} 由四个完整成功回合首尾拼接：Task 1 的 \texttt{t1\_public\_003}/seed 33、Task 2 的 \texttt{t2\_public\_001}/seed 61，以及 Task 3 的 \texttt{t3\_public\_001}/seed 91 和 \texttt{t3\_public\_002}/seed 92。总时长约 4 分 26.5 秒，H.264，640$\times$480，8 fps，覆盖三个任务层级和中英文指令。所有片段均来自标准 \texttt{async + realtime} 的完整成功回合，没有加速或删除回合内部过程。
+
+此外，\path{video/full_rollouts/} 保存全部 15 个公开 episode 的独立完整录像。为录像单独执行的全量批次同样获得 Task 1 6/6、Task 2 6/6、Task 3 3/3，全部核心率指标 100\%、0 次不安全接触；其聚合和逐回合摘要位于 \path{results/video_run/}。视频用于展示与核查，正式分数仍以 \path{results/aggregates/} 中此前冻结代码的完整公开集结果为准。
+
+\section{可复现性}
+
+主要环境为 Linux、Python 3.10、MuJoCo 3.3.7、NumPy 1.24--2.x、Ultralytics 8.4.149。安装和运行步骤为：
+
+\begin{verbatim}
+bash scripts/setup.sh
+source .venv/bin/activate
+YOLO_DEVICE=0 python yolo/infer_server.py
+\end{verbatim}
+
+另一个终端运行：
+
+\begin{verbatim}
+source .venv/bin/activate
+MUJOCO_EGL_DEVICE_ID=1 bash scripts/run_student.sh
+\end{verbatim}
+
+三个任务也可以分别通过 \path{configs/task1_place_public.json}、\path{configs/task2_ycb_public.json} 和 \path{configs/task3_sort_public.json} 复现。若没有 CUDA，可将 \texttt{YOLO\_DEVICE} 设为 \texttt{cpu} 做安装与接口检查；最终异步实时评测需要保证推理速度足够。完整依赖见 \path{requirements.txt} 和 \path{pyproject.toml}，权重见 \path{yolo/best.pt}。
+
+\section{讨论与边界}
+
+当前方法依赖顶视相机质量、已知相机标定和有限类别检测器；对严重遮挡、新类别、透明物体、动态场景和真实机器人标定误差尚未验证。规则语言解析覆盖课程公开模板及其同义表达，但不是通用语言模型。Task 3 在最困难场景中的预算余量较小，说明执行效率仍有提升空间。公开集全部成功不能替代教师隐藏集，也不应在看到隐藏集结果后继续针对同一隐藏集调参。
+
+\section{团队分工}
+
+\todo{填写每位成员的姓名、学号与可核查贡献。}具体内容应与根目录 \path{TEAM.md} 保持一致。
+
+\section*{提交证据索引}
+
+\begin{itemize}
+  \item 正式指标：\path{results/aggregates/}
+  \item 正式逐回合摘要：\path{results/summaries/}
+  \item 代表性成功日志：\path{results/logs/representative_success_t3_public_001_seed91/}
+  \item 代表性失败日志：\path{results/logs/representative_failure_t3_public_003_seed93/}
+  \item 主演示与全部 15 个录像：\path{video/}
+  \item 全量录像批次摘要：\path{results/video_run/}
+  \item 核心策略：\path{policies/student_policy.py}、\path{policies/sort_policy.py}
+  \item 感知与验证：\path{policies/yolo_perception.py}、\path{policies/placement_verification.py}
+\end{itemize}
+
+\end{document}

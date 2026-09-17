@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "episodes": [
+    {"episode_id": "public_001", "instruction": "抓取桌面上的红色方块", "target": "red_cube", "seed": 0},
+    {"episode_id": "public_002", "instruction": "Pick up the green cylinder.", "target": "green_cylinder", "seed": 1},
+    {"episode_id": "public_003", "instruction": "请找到蓝色长方体并将它夹起", "target": "blue_box", "seed": 2},
+    {"episode_id": "public_004", "instruction": "Lift the red cube from the table.", "target": "red_cube", "seed": 3},
+    {"episode_id": "public_005", "instruction": "把绿色圆柱体抓起来", "target": "green_cylinder", "seed": 4},
+    {"episode_id": "public_006", "instruction": "Grasp the blue box.", "target": "blue_box", "seed": 5},
+    {"episode_id": "public_007", "instruction": "夹起红色立方体", "target": "red_cube", "seed": 6},
+    {"episode_id": "public_008", "instruction": "Find and lift the green cylinder.", "target": "green_cylinder", "seed": 7},
+    {"episode_id": "public_009", "instruction": "Pick up the blue cuboid.", "target": "blue_box", "seed": 8},
+    {"episode_id": "public_010", "instruction": "Please grasp the red block.", "target": "red_cube", "seed": 9},
+    {"episode_id": "public_011", "instruction": "拿起绿色圆柱", "target": "green_cylinder", "seed": 10},
+    {"episode_id": "public_012", "instruction": "抓取蓝色盒子", "target": "blue_box", "seed": 11}
+  ]
+}
+

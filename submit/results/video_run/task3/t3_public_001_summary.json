@@ -1,0 +1,76 @@
+{
+  "episode_id": "t3_public_001",
+  "split": "public",
+  "seed": 91,
+  "instruction": "把所有水果放进圆盘，把所有包装食品放进方盘。",
+  "expected_target": "apple",
+  "selected_target": "apple",
+  "target_selection_correct": true,
+  "task_plan_matches_hidden_goal": true,
+  "success": true,
+  "terminal_reason": "success",
+  "control_steps": 2579,
+  "control_budget": 3000,
+  "sim_time_s": 103.39999999994042,
+  "wall_time_s": 103.13843846495729,
+  "execution_mode": "async",
+  "realtime": true,
+  "async_control": {
+    "submitted": 1219,
+    "accepted": 1219,
+    "stale_dropped": 0,
+    "model_errors": 0,
+    "safe_hold_steps": 70,
+    "reused_command_steps": 1290,
+    "last_latency_s": 0.039792166906408966
+  },
+  "last_stage": "verify_place",
+  "verification_observed": true,
+  "retry_count": 0,
+  "unsafe_contact_count": 0,
+  "object_xy_displacement_m": {
+    "apple": 0.3511331630738587,
+    "orange": 0.31108615441800214,
+    "mustard_bottle": 0.4616652390621938,
+    "potted_meat_can": 0.35510282731979287
+  },
+  "max_non_target_xy_displacement_m": 0.0,
+  "object_catalog": [
+    "red_cube",
+    "green_cylinder",
+    "blue_box",
+    "banana",
+    "apple",
+    "orange",
+    "mustard_bottle",
+    "potted_meat_can",
+    "scissors",
+    "marker"
+  ],
+  "task_kind": "sort",
+  "hidden_goals": [
+    {
+      "target": "apple",
+      "destination": "round_tray"
+    },
+    {
+      "target": "orange",
+      "destination": "round_tray"
+    },
+    {
+      "target": "mustard_bottle",
+      "destination": "square_tray"
+    },
+    {
+      "target": "potted_meat_can",
+      "destination": "square_tray"
+    }
+  ],
+  "goal_status": {
+    "apple->round_tray": true,
+    "orange->round_tray": true,
+    "mustard_bottle->square_tray": true,
+    "potted_meat_can->square_tray": true
+  },
+  "completed_goal_count": 4
+}

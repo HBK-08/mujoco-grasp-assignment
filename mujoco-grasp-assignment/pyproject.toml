@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "zju-mujoco-graspbench"
+version = "0.1.0"
+description = "Lightweight MuJoCo tabletop grasping assignment for embodied-AI courses"
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = {text = "MIT (course code); vendored assets retain their upstream licenses"}
+dependencies = [
+  "mujoco==3.3.7",
+  "numpy>=1.24,<3",
+  "imageio>=2.34,<3",
+  "imageio-ffmpeg>=0.5,<1",
+  "pillow>=10,<12",
+  "typing-extensions>=4.6,<5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9", "ruff>=0.6,<1"]
+# Offline only: generates committed collision meshes.  pyVHACD 0.0.2 predates
+# NumPy 2, while the simulator itself supports the broader base requirement.
+asset-build = ["pyVHACD==0.0.2", "numpy>=1.24,<2"]
+
+[project.scripts]
+grasp-eval = "graspbench.evaluate:main"
+grasp-inspect = "graspbench.cli:inspect_main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+graspbench = ["assets/**/*.xml", "assets/**/*.obj", "assets/**/*.stl", "assets/**/*.mtl", "assets/**/*.png", "assets/**/*.md", "assets/**/LICENSE"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -m 'not integration'"
+markers = [
+  "integration: runs a task-level test against a live model service",
+  "live_model: calls a paid or remote VLM endpoint",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

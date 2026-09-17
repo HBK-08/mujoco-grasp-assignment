@@ -1,0 +1,59 @@
+{
+  "episode_id": "t2_public_003",
+  "split": "public",
+  "seed": 63,
+  "instruction": "请将黄色香蕉夹起并放入紫色圆盘。",
+  "expected_target": "banana",
+  "selected_target": "banana",
+  "target_selection_correct": true,
+  "task_plan_matches_hidden_goal": true,
+  "success": true,
+  "terminal_reason": "success",
+  "control_steps": 703,
+  "control_budget": 800,
+  "sim_time_s": 28.35999999999516,
+  "wall_time_s": 28.10836139402818,
+  "execution_mode": "async",
+  "realtime": true,
+  "async_control": {
+    "submitted": 349,
+    "accepted": 349,
+    "stale_dropped": 0,
+    "model_errors": 0,
+    "safe_hold_steps": 3,
+    "reused_command_steps": 351,
+    "last_latency_s": 0.0397352350410074
+  },
+  "last_stage": "verify_place",
+  "verification_observed": true,
+  "retry_count": 2,
+  "unsafe_contact_count": 0,
+  "object_xy_displacement_m": {
+    "banana": 0.3173815982747462,
+    "apple": 7.550293027086624e-06
+  },
+  "max_non_target_xy_displacement_m": 7.550293027086624e-06,
+  "object_catalog": [
+    "red_cube",
+    "green_cylinder",
+    "blue_box",
+    "banana",
+    "apple",
+    "orange",
+    "mustard_bottle",
+    "potted_meat_can",
+    "scissors",
+    "marker"
+  ],
+  "task_kind": "place",
+  "hidden_goals": [
+    {
+      "target": "banana",
+      "destination": "round_tray"
+    }
+  ],
+  "goal_status": {
+    "banana->round_tray": true
+  },
+  "completed_goal_count": 1
+}

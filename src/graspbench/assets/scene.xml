@@ -1,0 +1,210 @@
+<mujoco model="zju_graspbench">
+  <include file="vendor/franka_emika_panda/panda.xml"/>
+
+  <compiler angle="radian" autolimits="true"/>
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicitfast" cone="elliptic">
+    <flag multiccd="enable"/>
+  </option>
+
+  <visual>
+    <global azimuth="135" elevation="-25" offwidth="960" offheight="720"/>
+    <quality shadowsize="2048"/>
+    <map znear="0.01" zfar="5"/>
+  </visual>
+
+  <asset>
+    <texture name="ground_tex" type="2d" builtin="checker" rgb1="0.19 0.21 0.23"
+      rgb2="0.23 0.25 0.27" width="256" height="256"/>
+    <material name="ground_mat" texture="ground_tex" texrepeat="4 4" reflectance="0.05"/>
+    <material name="table_mat" rgba="0.54 0.39 0.25 1" roughness="0.8"/>
+    <material name="red_mat" rgba="0.86 0.10 0.12 1" roughness="0.65"/>
+    <material name="green_mat" rgba="0.10 0.67 0.23 1" roughness="0.65"/>
+    <material name="blue_mat" rgba="0.08 0.32 0.86 1" roughness="0.65"/>
+    <material name="square_tray_mat" rgba="0.92 0.62 0.08 1" roughness="0.5"/>
+    <material name="round_tray_mat" rgba="0.50 0.16 0.72 1" roughness="0.5"/>
+
+    <!-- Visual YCB meshes.  Physics uses the low-complexity proxy geoms below. -->
+    <texture name="banana_tex" type="2d" file="ycb/011_banana/texture_map.png"/>
+    <material name="banana_mat" texture="banana_tex" roughness="0.65"/>
+    <mesh name="banana_mesh" file="../../../ycb/011_banana/textured.obj"/>
+    <!-- Generated offline by scripts/generate_banana_vhacd.py. -->
+    <mesh name="banana_vhacd_00" file="../../../ycb/011_banana/collision/banana_vhacd_00.obj"/>
+    <mesh name="banana_vhacd_01" file="../../../ycb/011_banana/collision/banana_vhacd_01.obj"/>
+    <mesh name="banana_vhacd_02" file="../../../ycb/011_banana/collision/banana_vhacd_02.obj"/>
+    <mesh name="banana_vhacd_03" file="../../../ycb/011_banana/collision/banana_vhacd_03.obj"/>
+    <mesh name="banana_vhacd_04" file="../../../ycb/011_banana/collision/banana_vhacd_04.obj"/>
+    <mesh name="banana_vhacd_05" file="../../../ycb/011_banana/collision/banana_vhacd_05.obj"/>
+    <texture name="apple_tex" type="2d" file="ycb/013_apple/texture_map.png"/>
+    <material name="apple_mat" texture="apple_tex" roughness="0.6"/>
+    <mesh name="apple_mesh" file="../../../ycb/013_apple/textured.obj"/>
+    <texture name="orange_tex" type="2d" file="ycb/017_orange/texture_map.png"/>
+    <material name="orange_mat" rgba="0.95 0.31 0.03 1" roughness="0.65"/>
+    <mesh name="orange_mesh" file="../../../ycb/017_orange/textured.obj"/>
+    <texture name="mustard_tex" type="2d" file="ycb/006_mustard_bottle/texture_map.png"/>
+    <material name="mustard_mat" rgba="0.10 0.67 0.23 1" roughness="0.55"/>
+    <mesh name="mustard_mesh" file="../../../ycb/006_mustard_bottle/textured.obj"/>
+    <mesh name="mustard_mesh_small" file="../../../ycb/006_mustard_bottle/textured.obj" scale="0.7 0.7 0.7"/>
+    <texture name="meat_can_tex" type="2d" file="ycb/010_potted_meat_can/texture_map.png"/>
+    <material name="meat_can_mat" rgba="0.08 0.32 0.86 1" roughness="0.55"/>
+    <mesh name="meat_can_mesh" file="../../../ycb/010_potted_meat_can/textured.obj"/>
+    <texture name="scissors_tex" type="2d" file="ycb/037_scissors/texture_map.png"/>
+    <material name="scissors_mat" texture="scissors_tex" roughness="0.45"/>
+    <mesh name="scissors_mesh" file="../../../ycb/037_scissors/textured.obj"/>
+    <texture name="marker_tex" type="2d" file="ycb/040_large_marker/texture_map.png"/>
+    <material name="marker_mat" texture="marker_tex" roughness="0.35"/>
+    <mesh name="marker_mesh" file="../../../ycb/040_large_marker/textured.obj"/>
+  </asset>
+
+  <default>
+    <default class="course_object">
+      <joint damping="0.001"/>
+      <geom density="550" friction="1.2 0.01 0.001" solref="0.006 1"
+        solimp="0.95 0.99 0.001" condim="4" group="1"/>
+    </default>
+  </default>
+
+  <worldbody>
+    <light name="key" pos="0.2 -0.4 1.8" dir="0.2 0.25 -1" diffuse="0.85 0.85 0.85"/>
+    <light name="fill" pos="1.2 0.8 1.2" dir="-0.6 -0.3 -1" diffuse="0.45 0.45 0.45"/>
+
+    <camera name="front" pos="1.20 0 0.92" xyaxes="0 1 0 -0.48 0 0.877" fovy="48"/>
+    <camera name="overhead" pos="0.52 0 1.38" xyaxes="0 1 0 -1 0 0" fovy="46"/>
+    <camera name="diagonal" pos="1.10 -0.95 1.05"
+      xyaxes="0.654 0.756 0 -0.436 0.377 0.817" fovy="48"/>
+
+    <geom name="floor" type="plane" size="2 2 0.05" pos="0 0 -0.01"
+      material="ground_mat" friction="1 0.01 0.001" group="0"/>
+
+    <body name="table" pos="0.52 0 0.375">
+      <geom name="tabletop" type="box" size="0.36 0.34 0.025" material="table_mat"
+        friction="1.1 0.01 0.001" group="0"/>
+      <geom name="leg_front_left" type="box" size="0.025 0.025 0.19" pos="0.29 -0.27 -0.19"
+        material="table_mat" group="0"/>
+      <geom name="leg_front_right" type="box" size="0.025 0.025 0.19" pos="0.29 0.27 -0.19"
+        material="table_mat" group="0"/>
+      <geom name="leg_back_left" type="box" size="0.025 0.025 0.19" pos="-0.29 -0.27 -0.19"
+        material="table_mat" group="0"/>
+      <geom name="leg_back_right" type="box" size="0.025 0.025 0.19" pos="-0.29 0.27 -0.19"
+        material="table_mat" group="0"/>
+    </body>
+
+    <!-- Fixed-base containers whose world pose is randomized by GraspEnv.reset(). -->
+    <body name="square_tray" pos="0.45 -0.19 0.4">
+      <geom name="square_tray_floor" type="box" size="0.130 0.130 0.008"
+        pos="0 0 0.008" material="square_tray_mat" friction="1.1 0.01 0.001" group="1"/>
+      <geom name="square_tray_wall_north" type="box" size="0.138 0.008 0.027"
+        pos="0 0.130 0.035" material="square_tray_mat" group="1"/>
+      <geom name="square_tray_wall_south" type="box" size="0.138 0.008 0.027"
+        pos="0 -0.130 0.035" material="square_tray_mat" group="1"/>
+      <geom name="square_tray_wall_east" type="box" size="0.008 0.122 0.027"
+        pos="0.130 0 0.035" material="square_tray_mat" group="1"/>
+      <geom name="square_tray_wall_west" type="box" size="0.008 0.122 0.027"
+        pos="-0.130 0 0.035" material="square_tray_mat" group="1"/>
+    </body>
+
+    <body name="round_tray" pos="0.60 0.19 0.4">
+      <geom name="round_tray_floor" type="cylinder" size="0.130 0.008" pos="0 0 0.008"
+        material="round_tray_mat" friction="1.1 0.01 0.001" group="1"/>
+      <geom name="round_tray_wall_0" type="box" size="0.007 0.034 0.027" pos="0.122 0 0.035" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_1" type="box" size="0.007 0.034 0.027" pos="0.106 0.061 0.035" euler="0 0 0.524" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_2" type="box" size="0.007 0.034 0.027" pos="0.061 0.106 0.035" euler="0 0 1.047" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_3" type="box" size="0.007 0.034 0.027" pos="0 0.122 0.035" euler="0 0 1.571" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_4" type="box" size="0.007 0.034 0.027" pos="-0.061 0.106 0.035" euler="0 0 2.094" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_5" type="box" size="0.007 0.034 0.027" pos="-0.106 0.061 0.035" euler="0 0 2.618" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_6" type="box" size="0.007 0.034 0.027" pos="-0.122 0 0.035" euler="0 0 3.142" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_7" type="box" size="0.007 0.034 0.027" pos="-0.106 -0.061 0.035" euler="0 0 -2.618" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_8" type="box" size="0.007 0.034 0.027" pos="-0.061 -0.106 0.035" euler="0 0 -2.094" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_9" type="box" size="0.007 0.034 0.027" pos="0 -0.122 0.035" euler="0 0 -1.571" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_10" type="box" size="0.007 0.034 0.027" pos="0.061 -0.106 0.035" euler="0 0 -1.047" material="round_tray_mat" group="1"/>
+      <geom name="round_tray_wall_11" type="box" size="0.007 0.034 0.027" pos="0.106 -0.061 0.035" euler="0 0 -0.524" material="round_tray_mat" group="1"/>
+    </body>
+
+    <body name="red_cube" pos="0.48 -0.12 0.426">
+      <freejoint name="red_cube_free"/>
+      <geom name="red_cube_geom" class="course_object" type="box" size="0.026 0.026 0.026"
+        material="red_mat"/>
+    </body>
+
+    <body name="green_cylinder" pos="0.58 0.02 0.431">
+      <freejoint name="green_cylinder_free"/>
+      <geom name="green_cylinder_geom" class="course_object" type="cylinder" size="0.025 0.031"
+        material="green_mat"/>
+    </body>
+
+    <body name="blue_box" pos="0.45 0.14 0.426">
+      <freejoint name="blue_box_free"/>
+      <geom name="blue_box_geom" class="course_object" type="box" size="0.031 0.021 0.026"
+        material="blue_mat"/>
+    </body>
+
+    <!-- YCB visual meshes with stable collision proxies. -->
+    <body name="banana" pos="0.57 -0.08 0.42">
+      <freejoint name="banana_free"/>
+      <inertial pos="0 0 0" mass="0.066" diaginertia="0.00018 0.00004 0.00018"/>
+      <geom name="banana_visual" type="mesh" mesh="banana_mesh" material="banana_mat"
+        pos="-0.011476 0.007344 -0.017963" contype="0" conaffinity="0" group="1"/>
+      <!-- Six VHACD-derived convex macro-hulls follow the curved render mesh. -->
+      <geom name="banana_collision_00" class="course_object" type="mesh" mesh="banana_vhacd_00"
+        pos="-0.011476 0.007344 -0.017963" rgba="0 0 0 0"/>
+      <geom name="banana_collision_01" class="course_object" type="mesh" mesh="banana_vhacd_01"
+        pos="-0.011476 0.007344 -0.017963" rgba="0 0 0 0"/>
+      <geom name="banana_collision_02" class="course_object" type="mesh" mesh="banana_vhacd_02"
+        pos="-0.011476 0.007344 -0.017963" rgba="0 0 0 0"/>
+      <geom name="banana_collision_03" class="course_object" type="mesh" mesh="banana_vhacd_03"
+        pos="-0.011476 0.007344 -0.017963" rgba="0 0 0 0"/>
+      <geom name="banana_collision_04" class="course_object" type="mesh" mesh="banana_vhacd_04"
+        pos="-0.011476 0.007344 -0.017963" rgba="0 0 0 0"/>
+      <geom name="banana_collision_05" class="course_object" type="mesh" mesh="banana_vhacd_05"
+        pos="-0.011476 0.007344 -0.017963" rgba="0 0 0 0"/>
+    </body>
+
+    <body name="apple" pos="0.51 0.08 0.438">
+      <freejoint name="apple_free"/>
+      <inertial pos="0 0 0" mass="0.068" diaginertia="0.00004 0.00004 0.00004"/>
+      <geom name="apple_visual" type="mesh" mesh="apple_mesh" material="apple_mat"
+        pos="-0.000859 0.003784 -0.035552" contype="0" conaffinity="0" group="1"/>
+      <geom name="apple_collision" class="course_object" type="ellipsoid" size="0.038 0.038 0.036" rgba="0 0 0 0"/>
+    </body>
+
+    <body name="orange" pos="0.58 0.06 0.438">
+      <freejoint name="orange_free"/>
+      <inertial pos="0 0 0" mass="0.130" diaginertia="0.00008 0.00008 0.00008"/>
+      <geom name="orange_visual" type="mesh" mesh="orange_mesh" material="orange_mat"
+        pos="0.006935 0.018360 -0.035428" contype="0" conaffinity="0" group="1"/>
+      <geom name="orange_collision" class="course_object" type="ellipsoid" size="0.037 0.037 0.036" rgba="0 0 0 0"/>
+    </body>
+
+    <body name="mustard_bottle" pos="0.60 0.12 0.467">
+      <freejoint name="mustard_bottle_free"/>
+      <inertial pos="0 0 0" mass="0.160" diaginertia="0.00032 0.00032 0.00007"/>
+      <geom name="mustard_visual" type="mesh" mesh="mustard_mesh_small" material="mustard_mat"
+        pos="0.010737 0.016449 -0.064749" contype="0" conaffinity="0" group="1"/>
+      <geom name="mustard_collision" class="course_object" type="box" size="0.034 0.024 0.067" rgba="0 0 0 0"/>
+    </body>
+
+    <body name="potted_meat_can" pos="0.62 -0.12 0.442">
+      <freejoint name="potted_meat_can_free"/>
+      <inertial pos="0 0 0" mass="0.180" diaginertia="0.00022 0.00035 0.00022"/>
+      <geom name="potted_meat_can_visual" type="mesh" mesh="meat_can_mesh" material="meat_can_mat"
+        pos="0.032784 0.026552 -0.038584" contype="0" conaffinity="0" group="1"/>
+      <geom name="potted_meat_can_collision" class="course_object" type="box" size="0.050 0.030 0.042" rgba="0 0 0 0"/>
+    </body>
+
+    <body name="scissors" pos="0.49 -0.05 0.409">
+      <freejoint name="scissors_free"/>
+      <inertial pos="0 0 0" mass="0.080" diaginertia="0.00028 0.00007 0.00030"/>
+      <geom name="scissors_visual" type="mesh" mesh="scissors_mesh" material="scissors_mat"
+        pos="-0.010022 -0.035939 -0.007474" contype="0" conaffinity="0" group="1"/>
+      <geom name="scissors_collision" class="course_object" type="box" size="0.048 0.101 0.008" rgba="0 0 0 0"/>
+    </body>
+
+    <body name="marker" pos="0.61 -0.05 0.411">
+      <freejoint name="marker_free"/>
+      <inertial pos="0 0 0" mass="0.030" diaginertia="0.00004 0.00002 0.00004"/>
+      <geom name="marker_visual" type="mesh" mesh="marker_mesh" material="marker_mat"
+        pos="0.035690 0.005082 -0.009174" contype="0" conaffinity="0" group="1"/>
+      <geom name="marker_collision" class="course_object" type="capsule" size="0.011 0.050"
+        euler="1.5708 0 0" rgba="0 0 0 0"/>
+    </body>
+  </worldbody>
+</mujoco>

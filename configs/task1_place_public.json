@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "task": "Task 1: primitive-object placement",
+  "episodes": [
+    {"episode_id": "t1_public_001", "instruction": "把红色方块放进方盘。", "target": "red_cube", "destination": "square_tray", "seed": 31, "scene_objects": ["red_cube", "green_cylinder", "blue_box"]},
+    {"episode_id": "t1_public_002", "instruction": "Place the green cylinder into the round tray.", "target": "green_cylinder", "destination": "round_tray", "seed": 32, "scene_objects": ["red_cube", "green_cylinder", "blue_box"]},
+    {"episode_id": "t1_public_003", "instruction": "请将蓝色长方体放入圆形盘子。", "target": "blue_box", "destination": "round_tray", "seed": 33, "scene_objects": ["red_cube", "green_cylinder", "blue_box"]},
+    {"episode_id": "t1_public_004", "instruction": "Put the red cube in the round tray.", "target": "red_cube", "destination": "round_tray", "seed": 34, "scene_objects": ["red_cube", "green_cylinder", "blue_box"]},
+    {"episode_id": "t1_public_005", "instruction": "把绿色圆柱体放到方盘里面。", "target": "green_cylinder", "destination": "square_tray", "seed": 35, "scene_objects": ["red_cube", "green_cylinder", "blue_box"]},
+    {"episode_id": "t1_public_006", "instruction": "Place the blue rectangular block in the square tray.", "target": "blue_box", "destination": "square_tray", "seed": 36, "scene_objects": ["red_cube", "green_cylinder", "blue_box"]}
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "schema_version": 3,
+  "task": "Task 2: textured YCB object pick and place",
+  "episodes": [
+    {"episode_id": "t2_public_001", "instruction": "把香蕉放进圆盘。", "target": "banana", "destination": "round_tray", "seed": 61, "scene_objects": ["banana", "apple"]},
+    {"episode_id": "t2_public_002", "instruction": "Place the apple into the square tray.", "target": "apple", "destination": "square_tray", "seed": 62, "scene_objects": ["banana", "apple"]},
+    {"episode_id": "t2_public_003", "instruction": "请将黄色香蕉夹起并放入紫色圆盘。", "target": "banana", "destination": "round_tray", "seed": 63, "scene_objects": ["banana", "apple"]},
+    {"episode_id": "t2_public_004", "instruction": "抓取红苹果，放到黄色方盘中。", "target": "apple", "destination": "square_tray", "seed": 64, "scene_objects": ["banana", "apple"]},
+    {"episode_id": "t2_public_005", "instruction": "Move the yellow banana to the round tray.", "target": "banana", "destination": "round_tray", "seed": 65, "scene_objects": ["banana", "apple"]},
+    {"episode_id": "t2_public_006", "instruction": "Pick up the apple and put it in the square tray.", "target": "apple", "destination": "square_tray", "seed": 66, "scene_objects": ["banana", "apple"]}
+  ]
+}
